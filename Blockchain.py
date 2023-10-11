@@ -20,6 +20,7 @@ class Block:
     
 class Blockchain:
     def __init__(self):
+        self.unconfirmed_transactions = []
         self.chain = []
         self.generate_genesis_block()
         self.pow_difficulty = 2
@@ -56,6 +57,7 @@ class Blockchain:
         while not computed_hash.startswith('0' * self.pow_difficulty):
             block.nonce += 1
             computed_hash = block.compute_hash()
+        return computed_hash
         
     def add_new_transaction(self, transaction):
         self.unconfirmed_transactions.append(transaction)
@@ -72,3 +74,25 @@ class Blockchain:
         self.add_block(new_block, proof)
         self.unconfirmed_transactions = []
         return new_block.index
+
+    def check_chain_validity(self, chain):
+        result = True
+        previous_hash = "0"
+        
+        # Iterate through every block
+        for block in chain:
+            block_hash = block.hash
+            
+            # Remove the hash field to recompute the hash again
+            # using `compute_hash` method.
+            delattr(block, "hash")
+            
+            if not self.is_valid_proof(block, block_hash) or previous_hash != block.previous_hash:
+                result = False
+                break
+            
+            block.hash, previous_hash = block_hash, block_hash
+        return result
+    
+    
+    
